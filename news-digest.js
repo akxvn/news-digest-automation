@@ -15,11 +15,7 @@ if (!GEMINI_API_KEY || !EMAIL_USER || !EMAIL_PASSWORD || !RECIPIENT_EMAIL) {
 async function callGeminiAPI(prompt) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
-      contents: [{
-        parts: [{
-          text: prompt
-        }]
-      }]
+      contents: [{parts: [{text: prompt}]}]
     });
 
     const options = {
@@ -40,9 +36,7 @@ async function callGeminiAPI(prompt) {
           const response = JSON.parse(data);
           const text = response.candidates[0].content.parts[0].text;
           resolve(text);
-        } catch(e) { 
-          reject(new Error('Gemini API error: ' + e.message)); 
-        }
+        } catch(e) { reject(new Error('Gemini API error')); }
       });
     });
 
@@ -70,20 +64,19 @@ async function sendEmail(html) {
 async function main() {
   try {
     console.log('Generating daily news digest...');
-    const prompt = `Scan web for latest 24-48 hours news. Create HTML email with today's date and intro.
+    const prompt = `Scan web for latest 24-48 hours news. Create HTML email with today's date.
 
-SECTION 1: India Startup & VC News - 4-6 stories (funding, IPOs, acquisitions). Each: headline + 2-3 sentence summary + "why it matters". End with one finance term explained with example.
+SECTION 1: India Startup & VC News - 4-6 stories. Each: headline + 2-3 sentence summary + "why it matters". End with one finance term explained.
 
-SECTION 2: India Macro News - 4-6 stories (RBI, SEBI, policy, trade, GST). Each: headline + 2-3 sentence summary + "why it matters". End with one finance term explained.
+SECTION 2: India Macro News - 4-6 stories (RBI, SEBI, policy, trade, GST). Each: headline + summary + "why it matters". End with one finance term.
 
-SECTION 3: Global Macro News - 4-6 stories (US Fed, VC trends, geopolitics, capital flows). Each: headline + 2-3 sentence summary + "why it matters". End with one finance term explained.
+SECTION 3: Global Macro News - 4-6 stories (US Fed, VC trends, geopolitics). Each: headline + summary + "why it matters". End with one finance term.
 
-Close with "Pattern of the Day" - one insight connecting all three sections.
+Close with "Pattern of the Day" - one insight connecting all three.
 
-Format as clean HTML with CSS styling.`;
+Format as clean HTML.`;
 
     const html = await callGeminiAPI(prompt);
-    console.log('Sending email...');
     await sendEmail(html);
     console.log('Done!');
   } catch(error) {
