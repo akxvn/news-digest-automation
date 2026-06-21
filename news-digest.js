@@ -2,31 +2,31 @@
 const https = require('https');
 const nodemailer = require('nodemailer');
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
 const RECIPIENT_EMAIL = process.env.RECIPIENT_EMAIL;
 
-if (!ANTHROPIC_API_KEY || !EMAIL_USER || !EMAIL_PASSWORD || !RECIPIENT_EMAIL) {
+if (!GEMINI_API_KEY || !EMAIL_USER || !EMAIL_PASSWORD || !RECIPIENT_EMAIL) {
   console.error('Missing environment variables');
   process.exit(1);
 }
 
-async function callClaudeAPI(prompt) {
+async function callGeminiAPI(prompt) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
-      model: 'claude-opus-4-6',
-      max_tokens: 4000,
-      messages: [{role: 'user', content: prompt}]
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }]
     });
 
     const options = {
-      hostname: 'api.anthropic.com',
-      path: '/v1/messages',
+      hostname: 'generativelanguage.googleapis.com',
+      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       method: 'POST',
       headers: {
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
         'content-length': Buffer.byteLength(body)
       }
@@ -38,8 +38,11 @@ async function callClaudeAPI(prompt) {
       res.on('end', () => {
         try {
           const response = JSON.parse(data);
-          resolve(response.content[0].text);
-        } catch(e) { reject(e); }
+          const text = response.candidates[0].content.parts[0].text;
+          resolve(text);
+        } catch(e) { 
+          reject(new Error('Gemini API error: ' + e.message)); 
+        }
       });
     });
 
@@ -79,7 +82,7 @@ Close with "Pattern of the Day" - one insight connecting all three sections.
 
 Format as clean HTML with CSS styling.`;
 
-    const html = await callClaudeAPI(prompt);
+    const html = await callGeminiAPI(prompt);
     console.log('Sending email...');
     await sendEmail(html);
     console.log('Done!');
