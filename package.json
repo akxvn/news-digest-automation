@@ -1,0 +1,9 @@
+{
+  "name": "news-digest-automation",
+  "version": "1.0.0",
+  "description": "Daily financial news digest generator",
+  "main": "news-digest.js",
+  "dependencies": {
+    "nodemailer": "^6.9.7"
+  }
+}
